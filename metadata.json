@@ -1,0 +1,5 @@
+{
+  "name": "Plena Cash Control",
+  "description": "A comprehensive frontend cash control system for Plena Informática, featuring income/expense tracking, dashboards, and local data persistence.",
+  "requestFramePermissions": []
+}
