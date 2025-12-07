@@ -21,9 +21,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+    { icon: PieChart, label: 'Dashboard', path: '/' },
     { icon: ArrowRightLeft, label: 'Transações', path: '/transactions' },
-    { icon: PieChart, label: 'Relatórios', path: '/reports' },
+    { icon: LayoutDashboard, label: 'Relatórios', path: '/reports' },
     { icon: Settings, label: 'Configurações', path: '/settings' },
   ];
 
@@ -79,7 +79,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
            <p className="text-xs text-gray-500 text-center">
              Desenvolvido por{' '}
              <a 
-               href="http://www.plenainformatica.com.br" 
+               href="https://www.plenainformatica.com.br" 
                target="_blank" 
                rel="noopener noreferrer" 
                className="hover:text-gray-400 transition-colors"

@@ -61,3 +61,49 @@ export const importData = (jsonString: string) => {
     return false;
   }
 };
+
+// Merges new data with existing data, avoiding duplicates based on ID
+export const mergeData = (jsonString: string): { success: boolean; count: number } => {
+  try {
+    const newData = JSON.parse(jsonString);
+    if (!newData.transactions || !Array.isArray(newData.transactions)) {
+      return { success: false, count: 0 };
+    }
+
+    const currentTransactions = getTransactions();
+    const currentIds = new Set(currentTransactions.map(t => t.id));
+    let addedCount = 0;
+
+    const mergedTransactions = [...currentTransactions];
+
+    newData.transactions.forEach((t: Transaction) => {
+      if (!currentIds.has(t.id)) {
+        mergedTransactions.push(t);
+        currentIds.add(t.id);
+        addedCount++;
+      }
+    });
+
+    saveTransactions(mergedTransactions);
+    
+    // Optionally merge categories if they don't exist
+    if (newData.categories && Array.isArray(newData.categories)) {
+      const currentCats = getCategories();
+      const currentCatIds = new Set(currentCats.map(c => c.id));
+      const mergedCats = [...currentCats];
+      
+      newData.categories.forEach((c: Category) => {
+        if (!currentCatIds.has(c.id)) {
+          mergedCats.push(c);
+          currentCatIds.add(c.id);
+        }
+      });
+      saveCategories(mergedCats);
+    }
+
+    return { success: true, count: addedCount };
+  } catch (e) {
+    console.error("Merge failed", e);
+    return { success: false, count: 0 };
+  }
+};

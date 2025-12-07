@@ -9,6 +9,15 @@ interface Props {
   onClose: () => void;
 }
 
+interface DailyStats {
+  income: number;
+  expense: number;
+  balance: number;
+  byMethod: Record<string, number>;
+  count: number;
+  transactions: Transaction[];
+}
+
 export const DailyClosingModal: React.FC<Props> = ({ transactions, onClose }) => {
   const todayStr = useMemo(() => {
     const today = new Date();
@@ -18,7 +27,7 @@ export const DailyClosingModal: React.FC<Props> = ({ transactions, onClose }) =>
     return `${year}-${month}-${day}`;
   }, []);
 
-  const todayStats = useMemo(() => {
+  const todayStats: DailyStats = useMemo(() => {
     const todaysTransactions = transactions.filter(t => t.date === todayStr);
     
     const income = todaysTransactions
@@ -66,7 +75,7 @@ export const DailyClosingModal: React.FC<Props> = ({ transactions, onClose }) =>
       else if (method === 'transfer') label = 'Transferência';
       else if (method === 'other') label = 'Outro';
       
-      message += `- ${label}: ${formatCurrency(amount)}\n`;
+      message += `- ${label}: ${formatCurrency(amount as number)}\n`;
     });
     
     message += `\n_Gerado em: ${new Date().toLocaleTimeString()}_`;
@@ -132,7 +141,7 @@ export const DailyClosingModal: React.FC<Props> = ({ transactions, onClose }) =>
                      method === 'pix' ? 'Pix' :
                      method === 'transfer' ? 'Transferência' : 'Outro'}
                   </span>
-                  <span className="font-mono font-medium">{formatCurrency(amount)}</span>
+                  <span className="font-mono font-medium">{formatCurrency(amount as number)}</span>
                 </div>
               ))}
             </div>

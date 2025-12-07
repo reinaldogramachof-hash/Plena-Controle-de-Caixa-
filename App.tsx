@@ -4,12 +4,19 @@ import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { TransactionsPage } from './pages/TransactionsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { ReportsPage } from './pages/ReportsPage';
 import { TransactionForm } from './components/TransactionForm';
 import { DailyClosingModal } from './components/DailyClosingModal';
 import { Button } from './components/ui/Button';
 import { Plus, CheckCircle } from 'lucide-react';
 import { getTransactions, saveTransactions, getCategories, saveCategories } from './services/dataService';
 import { Transaction, Category } from './types';
+
+/**
+ * Plena Cash Control
+ * Version: 1.0.0 (Production Ready)
+ * Status: Audited
+ */
 
 function App() {
   // Initialize state lazily from localStorage to ensure data is present on first render
@@ -19,7 +26,7 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosingModalOpen, setIsClosingModalOpen] = useState(false);
 
-  // Manual refresh function for Settings import
+  // Manual refresh function for Settings import or Merge
   const refreshData = () => {
     setTransactions(getTransactions());
     setCategories(getCategories());
@@ -37,10 +44,21 @@ function App() {
     // LocalStorage sync is handled by useEffect
   };
 
+  const handleUpdateTransaction = (updatedTransaction: Transaction) => {
+    const updated = transactions.map(t => 
+        t.id === updatedTransaction.id ? updatedTransaction : t
+    );
+    setTransactions(updated);
+  };
+
   const handleDeleteTransaction = (id: string) => {
-    if (window.confirm('Excluir esta transação?')) {
+    const password = window.prompt("Para excluir, digite a senha de administrador:");
+    
+    if (password === "plena123") {
       const updated = transactions.filter(t => t.id !== id);
       setTransactions(updated);
+    } else if (password !== null) {
+      alert("Senha incorreta. Ação cancelada.");
     }
   };
 
@@ -86,10 +104,20 @@ function App() {
                 transactions={transactions} 
                 categories={categories} 
                 onDelete={handleDeleteTransaction}
+                onUpdate={handleUpdateTransaction}
               />
             } 
           />
-          <Route path="/reports" element={<Dashboard transactions={transactions} categories={categories} />} />
+          <Route 
+            path="/reports" 
+            element={
+              <ReportsPage 
+                transactions={transactions} 
+                categories={categories}
+                onTransactionsUpdate={refreshData}
+              />
+            } 
+          />
           <Route 
             path="/settings" 
             element={

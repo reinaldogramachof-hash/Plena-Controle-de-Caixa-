@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
-import { Search, Filter, Trash2, Tag, Calendar, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { Search, Filter, Trash2, Tag, Calendar, ArrowUpCircle, ArrowDownCircle, Edit2 } from 'lucide-react';
 import { Transaction, Category, TransactionType } from '../types';
 import { formatCurrency, formatDate } from '../utils';
+import { TransactionForm } from '../components/TransactionForm';
 
 interface Props {
   transactions: Transaction[];
   categories: Category[];
   onDelete: (id: string) => void;
+  onUpdate: (transaction: Transaction) => void;
 }
 
-export const TransactionsPage: React.FC<Props> = ({ transactions, categories, onDelete }) => {
+export const TransactionsPage: React.FC<Props> = ({ transactions, categories, onDelete, onUpdate }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | TransactionType>('all');
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || 'N/A';
 
@@ -107,13 +110,22 @@ export const TransactionsPage: React.FC<Props> = ({ transactions, categories, on
                        </div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <button 
-                        onClick={() => onDelete(t.id)}
-                        className="text-gray-400 hover:text-red-600 transition-colors p-2 rounded-full hover:bg-red-50"
-                        title="Excluir"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
+                      <div className="flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => setEditingTransaction(t)}
+                          className="text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-full hover:bg-blue-50"
+                          title="Editar"
+                        >
+                          <Edit2 className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={() => onDelete(t.id)}
+                          className="text-gray-400 hover:text-red-600 transition-colors p-2 rounded-full hover:bg-red-50"
+                          title="Excluir"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -122,6 +134,18 @@ export const TransactionsPage: React.FC<Props> = ({ transactions, categories, on
           </table>
         </div>
       </div>
+      
+      {editingTransaction && (
+        <TransactionForm
+          categories={categories}
+          initialData={editingTransaction}
+          onSave={(updatedTransaction) => {
+            onUpdate(updatedTransaction);
+            setEditingTransaction(null);
+          }}
+          onClose={() => setEditingTransaction(null)}
+        />
+      )}
     </div>
   );
 };
