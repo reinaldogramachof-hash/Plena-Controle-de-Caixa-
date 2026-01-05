@@ -1,4 +1,4 @@
-const CACHE_NAME = 'plena-cash-v2';
+const CACHE_NAME = 'plena-cash-2026';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

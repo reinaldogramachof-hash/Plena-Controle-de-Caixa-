@@ -14,7 +14,7 @@ import { Transaction, Category } from './types';
 
 /**
  * Plena Cash Control
- * Version: 1.0.0 (Production Ready)
+ * Version: 2026.1.0 (Production Ready)
  * Status: Audited
  */
 

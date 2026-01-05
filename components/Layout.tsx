@@ -87,7 +87,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
              >
                Plena Informática
              </a>{' '}
-             2025
+             2026
            </p>
         </div>
       </aside>
