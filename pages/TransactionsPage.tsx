@@ -23,7 +23,13 @@ export const TransactionsPage: React.FC<Props> = ({ transactions, categories, on
                           t.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesType = filterType === 'all' || t.type === filterType;
     return matchesSearch && matchesType;
-  }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }).sort((a, b) => {
+    // Sort by Date Descending
+    const dateComparison = b.date.localeCompare(a.date);
+    if (dateComparison !== 0) return dateComparison;
+    // If dates are equal, sort by creation time (most recently added first)
+    return b.createdAt - a.createdAt;
+  });
 
   return (
     <div className="space-y-6">
