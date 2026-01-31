@@ -8,6 +8,7 @@ import { ReportsPage } from './pages/ReportsPage';
 import { ClientsPage } from './pages/ClientsPage';
 import { TransactionForm } from './components/TransactionForm';
 import { DailyClosingModal } from './components/DailyClosingModal';
+import { AIAssistant } from './components/AIAssistant';
 import { Button } from './components/ui/Button';
 import { Plus, CheckCircle } from 'lucide-react';
 import { 
@@ -171,6 +172,8 @@ function App() {
             } 
           />
         </Routes>
+
+        <AIAssistant transactions={transactions} categories={categories} />
 
         {isModalOpen && (
           <TransactionForm 
