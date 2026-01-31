@@ -5,24 +5,30 @@ import { Dashboard } from './components/Dashboard';
 import { TransactionsPage } from './pages/TransactionsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ReportsPage } from './pages/ReportsPage';
+import { ClientsPage } from './pages/ClientsPage';
 import { TransactionForm } from './components/TransactionForm';
 import { DailyClosingModal } from './components/DailyClosingModal';
 import { Button } from './components/ui/Button';
 import { Plus, CheckCircle } from 'lucide-react';
-import { getTransactions, saveTransactions, getCategories, saveCategories } from './services/dataService';
-import { Transaction, Category } from './types';
+import { 
+  getTransactions, saveTransactions, 
+  getCategories, saveCategories,
+  getClients, saveClients 
+} from './services/dataService';
+import { Transaction, Category, Client } from './types';
 
 /**
  * Plena Cash Control
- * Version: 2026.1.0 (Production Ready)
+ * Version: 2026.1.1 (Clients Module Added)
  * Status: Audited
  */
 
 function App() {
-  // Initialize state lazily from localStorage to ensure data is present on first render
-  // and to avoid overwriting localStorage with empty arrays on mount
+  // Initialize state lazily
   const [transactions, setTransactions] = useState<Transaction[]>(() => getTransactions());
   const [categories, setCategories] = useState<Category[]>(() => getCategories());
+  const [clients, setClients] = useState<Client[]>(() => getClients());
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosingModalOpen, setIsClosingModalOpen] = useState(false);
 
@@ -30,18 +36,23 @@ function App() {
   const refreshData = () => {
     setTransactions(getTransactions());
     setCategories(getCategories());
+    setClients(getClients());
   };
 
-  // Persist when state changes
-  // Removed the length check to allow saving empty arrays (when user deletes all items)
+  // Persist transactions
   useEffect(() => {
     saveTransactions(transactions);
   }, [transactions]);
 
+  // Persist clients
+  useEffect(() => {
+    saveClients(clients);
+  }, [clients]);
+
+  // --- Transaction Handlers ---
   const handleAddTransaction = (transaction: Transaction) => {
     const updated = [...transactions, transaction];
     setTransactions(updated);
-    // LocalStorage sync is handled by useEffect
   };
 
   const handleUpdateTransaction = (updatedTransaction: Transaction) => {
@@ -62,6 +73,7 @@ function App() {
     }
   };
 
+  // --- Category Handlers ---
   const handleAddCategory = (category: Category) => {
     const updated = [...categories, category];
     setCategories(updated);
@@ -72,6 +84,24 @@ function App() {
     const updated = categories.filter(c => c.id !== id);
     setCategories(updated);
     saveCategories(updated);
+  };
+
+  // --- Client Handlers ---
+  const handleAddClient = (client: Client) => {
+    const updated = [...clients, client];
+    setClients(updated);
+  };
+
+  const handleUpdateClient = (updatedClient: Client) => {
+    const updated = clients.map(c => 
+      c.id === updatedClient.id ? updatedClient : c
+    );
+    setClients(updated);
+  };
+
+  const handleDeleteClient = (id: string) => {
+    const updated = clients.filter(c => c.id !== id);
+    setClients(updated);
   };
 
   return (
@@ -105,6 +135,17 @@ function App() {
                 categories={categories} 
                 onDelete={handleDeleteTransaction}
                 onUpdate={handleUpdateTransaction}
+              />
+            } 
+          />
+          <Route 
+            path="/clients" 
+            element={
+              <ClientsPage 
+                clients={clients} 
+                onAddClient={handleAddClient}
+                onUpdateClient={handleUpdateClient}
+                onDeleteClient={handleDeleteClient}
               />
             } 
           />

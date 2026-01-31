@@ -7,7 +7,8 @@ import {
   Settings, 
   Menu, 
   X,
-  Wallet
+  Wallet,
+  Users
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -23,6 +24,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navItems = [
     { icon: PieChart, label: 'Dashboard', path: '/' },
     { icon: ArrowRightLeft, label: 'Transações', path: '/transactions' },
+    { icon: Users, label: 'Clientes', path: '/clients' },
     { icon: LayoutDashboard, label: 'Relatórios', path: '/reports' },
     { icon: Settings, label: 'Configurações', path: '/settings' },
   ];

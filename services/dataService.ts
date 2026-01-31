@@ -1,7 +1,8 @@
-import { Category, Transaction } from '../types';
+import { Category, Transaction, Client } from '../types';
 
 const TRANS_KEY = 'plena_transactions';
 const CAT_KEY = 'plena_categories';
+const CLIENTS_KEY = 'plena_clients';
 
 const defaultCategories: Category[] = [
   // Entradas (Receitas)
@@ -37,10 +38,20 @@ export const saveCategories = (categories: Category[]) => {
   localStorage.setItem(CAT_KEY, JSON.stringify(categories));
 };
 
+export const getClients = (): Client[] => {
+  const data = localStorage.getItem(CLIENTS_KEY);
+  return data ? JSON.parse(data) : [];
+};
+
+export const saveClients = (clients: Client[]) => {
+  localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients));
+};
+
 export const exportData = () => {
   const data = {
     transactions: getTransactions(),
     categories: getCategories(),
+    clients: getClients(),
     exportDate: new Date().toISOString(),
   };
   return JSON.stringify(data, null, 2);
@@ -55,6 +66,9 @@ export const importData = (jsonString: string) => {
     if (data.categories && Array.isArray(data.categories)) {
       saveCategories(data.categories);
     }
+    if (data.clients && Array.isArray(data.clients)) {
+      saveClients(data.clients);
+    }
     return true;
   } catch (e) {
     console.error("Import failed", e);
@@ -66,27 +80,25 @@ export const importData = (jsonString: string) => {
 export const mergeData = (jsonString: string): { success: boolean; count: number } => {
   try {
     const newData = JSON.parse(jsonString);
-    if (!newData.transactions || !Array.isArray(newData.transactions)) {
-      return { success: false, count: 0 };
-    }
-
-    const currentTransactions = getTransactions();
-    const currentIds = new Set(currentTransactions.map(t => t.id));
     let addedCount = 0;
 
-    const mergedTransactions = [...currentTransactions];
+    // Merge Transactions
+    if (newData.transactions && Array.isArray(newData.transactions)) {
+        const currentTransactions = getTransactions();
+        const currentIds = new Set(currentTransactions.map(t => t.id));
+        const mergedTransactions = [...currentTransactions];
 
-    newData.transactions.forEach((t: Transaction) => {
-      if (!currentIds.has(t.id)) {
-        mergedTransactions.push(t);
-        currentIds.add(t.id);
-        addedCount++;
-      }
-    });
-
-    saveTransactions(mergedTransactions);
+        newData.transactions.forEach((t: Transaction) => {
+        if (!currentIds.has(t.id)) {
+            mergedTransactions.push(t);
+            currentIds.add(t.id);
+            addedCount++;
+        }
+        });
+        saveTransactions(mergedTransactions);
+    }
     
-    // Optionally merge categories if they don't exist
+    // Merge Categories
     if (newData.categories && Array.isArray(newData.categories)) {
       const currentCats = getCategories();
       const currentCatIds = new Set(currentCats.map(c => c.id));
@@ -100,6 +112,21 @@ export const mergeData = (jsonString: string): { success: boolean; count: number
       });
       saveCategories(mergedCats);
     }
+
+    // Merge Clients
+    if (newData.clients && Array.isArray(newData.clients)) {
+        const currentClients = getClients();
+        const currentClientIds = new Set(currentClients.map(c => c.id));
+        const mergedClients = [...currentClients];
+        
+        newData.clients.forEach((c: Client) => {
+          if (!currentClientIds.has(c.id)) {
+            mergedClients.push(c);
+            currentClientIds.add(c.id);
+          }
+        });
+        saveClients(mergedClients);
+      }
 
     return { success: true, count: addedCount };
   } catch (e) {

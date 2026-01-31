@@ -21,6 +21,24 @@ export interface Transaction {
   createdAt: number;
 }
 
+export interface ClientTask {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface Client {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  document: string; // CPF or CNPJ
+  address: string;
+  notes: string; // The Post-it content
+  tasks: ClientTask[];
+  createdAt: number;
+}
+
 export interface FilterState {
   period: 'today' | 'week' | 'month' | 'all';
   type: 'all' | TransactionType;
