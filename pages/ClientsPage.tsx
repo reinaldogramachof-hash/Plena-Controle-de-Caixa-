@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Folder, Plus, Phone, Mail, MapPin, StickyNote, Edit2, Trash2, X, CheckSquare, Check, Circle } from 'lucide-react';
+import { Search, Folder, Plus, Phone, Mail, MapPin, StickyNote, Edit2, Trash2, X, CheckSquare, Check, Circle, Calendar, Save } from 'lucide-react';
 import { Client, ClientTask } from '../types';
 import { Button } from '../components/ui/Button';
 import { ClientForm } from '../components/ClientForm';
@@ -17,7 +17,15 @@ export const ClientsPage: React.FC<Props> = ({ clients, onAddClient, onUpdateCli
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  
+  // Task State
   const [newTaskText, setNewTaskText] = useState('');
+  const [newTaskDate, setNewTaskDate] = useState('');
+  
+  // Task Editing State
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingTaskText, setEditingTaskText] = useState('');
+  const [editingTaskDate, setEditingTaskDate] = useState('');
 
   const filteredClients = clients.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,7 +55,8 @@ export const ClientsPage: React.FC<Props> = ({ clients, onAddClient, onUpdateCli
     const newTask: ClientTask = {
       id: generateId(),
       text: newTaskText,
-      completed: false
+      completed: false,
+      dueDate: newTaskDate
     };
 
     const updatedClient = {
@@ -58,6 +67,7 @@ export const ClientsPage: React.FC<Props> = ({ clients, onAddClient, onUpdateCli
     onUpdateClient(updatedClient);
     setSelectedClient(updatedClient);
     setNewTaskText('');
+    setNewTaskDate('');
   };
 
   const handleToggleTask = (taskId: string) => {
@@ -74,6 +84,7 @@ export const ClientsPage: React.FC<Props> = ({ clients, onAddClient, onUpdateCli
 
   const handleDeleteTask = (taskId: string) => {
     if (!selectedClient) return;
+    if (!window.confirm("Excluir esta tarefa permanentemente?")) return;
 
     const updatedTasks = (selectedClient.tasks || []).filter(task => task.id !== taskId);
     
@@ -82,11 +93,42 @@ export const ClientsPage: React.FC<Props> = ({ clients, onAddClient, onUpdateCli
     setSelectedClient(updatedClient);
   };
 
+  const startEditingTask = (task: ClientTask) => {
+    setEditingTaskId(task.id);
+    setEditingTaskText(task.text);
+    setEditingTaskDate(task.dueDate || '');
+  };
+
+  const cancelEditingTask = () => {
+    setEditingTaskId(null);
+    setEditingTaskText('');
+    setEditingTaskDate('');
+  };
+
+  const saveEditingTask = () => {
+    if (!selectedClient || !editingTaskId || !editingTaskText.trim()) return;
+
+    const updatedTasks = (selectedClient.tasks || []).map(task => 
+      task.id === editingTaskId ? { ...task, text: editingTaskText, dueDate: editingTaskDate } : task
+    );
+
+    const updatedClient = { ...selectedClient, tasks: updatedTasks };
+    onUpdateClient(updatedClient);
+    setSelectedClient(updatedClient);
+    cancelEditingTask();
+  };
+
   // --- Progress Calculation ---
   const getProgress = (tasks: ClientTask[] = []) => {
      if (tasks.length === 0) return 0;
      const completed = tasks.filter(t => t.completed).length;
      return Math.round((completed / tasks.length) * 100);
+  };
+
+  const formatDateShort = (dateString?: string) => {
+    if (!dateString) return null;
+    const parts = dateString.split('-');
+    return `${parts[2]}/${parts[1]}`;
   };
 
   return (
@@ -278,21 +320,32 @@ export const ClientsPage: React.FC<Props> = ({ clients, onAddClient, onUpdateCli
                         <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                            
                            {/* Add Task Input */}
-                           <form onSubmit={handleAddTask} className="flex border-b border-gray-100 p-2 bg-gray-50">
-                              <input 
-                                 type="text" 
-                                 className="flex-1 bg-white border border-gray-200 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
-                                 placeholder="Adicionar nova tarefa..."
-                                 value={newTaskText}
-                                 onChange={e => setNewTaskText(e.target.value)}
-                              />
-                              <button 
-                                 type="submit"
-                                 disabled={!newTaskText.trim()}
-                                 className="ml-2 bg-blue-600 text-white p-1.5 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                 <Plus className="w-4 h-4" />
-                              </button>
+                           <form onSubmit={handleAddTask} className="flex flex-col gap-2 border-b border-gray-100 p-2 bg-gray-50">
+                              <div className="flex gap-2">
+                                <input 
+                                   type="text" 
+                                   className="flex-1 bg-white border border-gray-200 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
+                                   placeholder="Nova tarefa..."
+                                   value={newTaskText}
+                                   onChange={e => setNewTaskText(e.target.value)}
+                                />
+                                <button 
+                                   type="submit"
+                                   disabled={!newTaskText.trim()}
+                                   className="bg-blue-600 text-white p-1.5 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                   <Plus className="w-4 h-4" />
+                                </button>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4 text-gray-400" />
+                                <input 
+                                  type="date"
+                                  className="bg-transparent text-sm text-gray-600 focus:outline-none"
+                                  value={newTaskDate}
+                                  onChange={e => setNewTaskDate(e.target.value)}
+                                />
+                              </div>
                            </form>
 
                            {/* Task List */}
@@ -302,21 +355,77 @@ export const ClientsPage: React.FC<Props> = ({ clients, onAddClient, onUpdateCli
                               ) : (
                                  <ul className="divide-y divide-gray-100">
                                     {selectedClient.tasks.map(task => (
-                                       <li key={task.id} className="flex items-center justify-between p-3 hover:bg-gray-50 group transition-colors">
-                                          <div className="flex items-center flex-1 min-w-0 cursor-pointer" onClick={() => handleToggleTask(task.id)}>
-                                             <div className={`flex-shrink-0 w-5 h-5 rounded border mr-3 flex items-center justify-center transition-colors ${task.completed ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white'}`}>
-                                                {task.completed && <Check className="w-3.5 h-3.5 text-white" />}
-                                             </div>
-                                             <span className={`text-sm truncate ${task.completed ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
-                                                {task.text}
-                                             </span>
-                                          </div>
-                                          <button 
-                                             onClick={() => handleDeleteTask(task.id)}
-                                             className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
-                                          >
-                                             <Trash2 className="w-3.5 h-3.5" />
-                                          </button>
+                                       <li key={task.id} className="p-3 hover:bg-gray-50 group transition-colors">
+                                          
+                                          {editingTaskId === task.id ? (
+                                            // EDIT MODE
+                                            <div className="flex flex-col gap-2 animate-fade-in">
+                                               <input 
+                                                 type="text" 
+                                                 className="w-full bg-white border border-blue-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-200"
+                                                 value={editingTaskText}
+                                                 onChange={e => setEditingTaskText(e.target.value)}
+                                                 autoFocus
+                                               />
+                                               <div className="flex justify-between items-center">
+                                                  <input 
+                                                    type="date"
+                                                    className="bg-white border border-gray-200 rounded px-2 py-1 text-xs"
+                                                    value={editingTaskDate}
+                                                    onChange={e => setEditingTaskDate(e.target.value)}
+                                                  />
+                                                  <div className="flex gap-1">
+                                                    <button onClick={saveEditingTask} className="p-1 bg-green-100 text-green-700 rounded hover:bg-green-200" title="Salvar">
+                                                      <Save className="w-3 h-3" />
+                                                    </button>
+                                                    <button onClick={cancelEditingTask} className="p-1 bg-red-100 text-red-700 rounded hover:bg-red-200" title="Cancelar">
+                                                      <X className="w-3 h-3" />
+                                                    </button>
+                                                  </div>
+                                               </div>
+                                            </div>
+                                          ) : (
+                                            // VIEW MODE
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center flex-1 min-w-0 select-none">
+                                                   <div 
+                                                     className={`flex-shrink-0 w-5 h-5 rounded border mr-3 flex items-center justify-center transition-colors cursor-pointer ${task.completed ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white'}`}
+                                                     onClick={() => handleToggleTask(task.id)}
+                                                   >
+                                                      {task.completed && <Check className="w-3.5 h-3.5 text-white" />}
+                                                   </div>
+                                                   
+                                                   <div className="flex-1 min-w-0" onDoubleClick={() => startEditingTask(task)}>
+                                                      <p className={`text-sm truncate ${task.completed ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                                                         {task.text}
+                                                      </p>
+                                                      {task.dueDate && (
+                                                        <span className={`text-xs flex items-center mt-0.5 ${new Date(task.dueDate) < new Date() && !task.completed ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                                                          <Calendar className="w-3 h-3 mr-1" />
+                                                          {formatDateShort(task.dueDate)}
+                                                        </span>
+                                                      )}
+                                                   </div>
+                                                </div>
+                                                
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                  <button 
+                                                     onClick={() => startEditingTask(task)}
+                                                     className="text-gray-400 hover:text-blue-500 p-1.5 rounded-full hover:bg-blue-50"
+                                                     title="Editar (Clique Duplo)"
+                                                  >
+                                                     <Edit2 className="w-3.5 h-3.5" />
+                                                  </button>
+                                                  <button 
+                                                     onClick={() => handleDeleteTask(task.id)}
+                                                     className="text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50"
+                                                     title="Excluir"
+                                                  >
+                                                     <Trash2 className="w-3.5 h-3.5" />
+                                                  </button>
+                                                </div>
+                                            </div>
+                                          )}
                                        </li>
                                     ))}
                                  </ul>

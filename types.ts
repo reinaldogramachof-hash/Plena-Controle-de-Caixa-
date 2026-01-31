@@ -25,6 +25,7 @@ export interface ClientTask {
   id: string;
   text: string;
   completed: boolean;
+  dueDate?: string; // YYYY-MM-DD
 }
 
 export interface Client {
