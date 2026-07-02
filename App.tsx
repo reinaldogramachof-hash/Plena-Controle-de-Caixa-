@@ -6,6 +6,7 @@ import { TransactionsPage } from './pages/TransactionsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { ClientsPage } from './pages/ClientsPage';
+import { ServicesPage } from './pages/ServicesPage';
 import { TransactionForm } from './components/TransactionForm';
 import { DailyClosingModal } from './components/DailyClosingModal';
 import { AIAssistant } from './components/AIAssistant';
@@ -14,9 +15,10 @@ import { Plus, CheckCircle } from 'lucide-react';
 import { 
   getTransactions, saveTransactions, 
   getCategories, saveCategories,
-  getClients, saveClients 
+  getClients, saveClients,
+  getServiceRecords, saveServiceRecords
 } from './services/dataService';
-import { Transaction, Category, Client } from './types';
+import { Transaction, Category, Client, ServiceRecord } from './types';
 
 /**
  * Plena Cash Control
@@ -29,6 +31,7 @@ function App() {
   const [transactions, setTransactions] = useState<Transaction[]>(() => getTransactions());
   const [categories, setCategories] = useState<Category[]>(() => getCategories());
   const [clients, setClients] = useState<Client[]>(() => getClients());
+  const [services, setServices] = useState<ServiceRecord[]>(() => getServiceRecords());
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosingModalOpen, setIsClosingModalOpen] = useState(false);
@@ -38,6 +41,7 @@ function App() {
     setTransactions(getTransactions());
     setCategories(getCategories());
     setClients(getClients());
+    setServices(getServiceRecords());
   };
 
   // Persist transactions
@@ -49,6 +53,11 @@ function App() {
   useEffect(() => {
     saveClients(clients);
   }, [clients]);
+
+  // Persist services
+  useEffect(() => {
+    saveServiceRecords(services);
+  }, [services]);
 
   // --- Transaction Handlers ---
   const handleAddTransaction = (transaction: Transaction) => {
@@ -105,6 +114,24 @@ function App() {
     setClients(updated);
   };
 
+  // --- Service Handlers ---
+  const handleAddService = (service: ServiceRecord) => {
+    const updated = [...services, service];
+    setServices(updated);
+  };
+
+  const handleUpdateService = (updatedService: ServiceRecord) => {
+    const updated = services.map(s => 
+      s.id === updatedService.id ? updatedService : s
+    );
+    setServices(updated);
+  };
+
+  const handleDeleteService = (id: string) => {
+    const updated = services.filter(s => s.id !== id);
+    setServices(updated);
+  };
+
   return (
     <Router>
       <Layout>
@@ -147,6 +174,17 @@ function App() {
                 onAddClient={handleAddClient}
                 onUpdateClient={handleUpdateClient}
                 onDeleteClient={handleDeleteClient}
+              />
+            } 
+          />
+          <Route 
+            path="/services" 
+            element={
+              <ServicesPage 
+                services={services} 
+                onAddService={handleAddService}
+                onUpdateService={handleUpdateService}
+                onDeleteService={handleDeleteService}
               />
             } 
           />

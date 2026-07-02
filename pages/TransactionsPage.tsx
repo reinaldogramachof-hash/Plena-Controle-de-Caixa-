@@ -69,6 +69,7 @@ export const TransactionsPage: React.FC<Props> = ({ transactions, categories, on
                 <th className="px-6 py-4 text-sm font-semibold text-gray-600">Data</th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-600">Descrição</th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-600">Categoria</th>
+                <th className="px-6 py-4 text-sm font-semibold text-gray-600 text-center">Qtd</th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-600">Método</th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-600 text-right">Valor</th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-600 text-center">Ações</th>
@@ -77,7 +78,7 @@ export const TransactionsPage: React.FC<Props> = ({ transactions, categories, on
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                     Nenhuma transação encontrada.
                   </td>
                 </tr>
@@ -107,6 +108,9 @@ export const TransactionsPage: React.FC<Props> = ({ transactions, categories, on
                       <span className="inline-block px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
                         {getCategoryName(t.categoryId)}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-center text-gray-600 font-medium">
+                      {t.quantity || 1}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 capitalize">{t.paymentMethod}</td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">

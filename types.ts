@@ -13,6 +13,7 @@ export interface Transaction {
   id: string;
   type: TransactionType;
   amount: number;
+  quantity?: number; // Added to track quantity of services (e.g. prints)
   description: string;
   categoryId: string;
   tags: string[];
@@ -37,6 +38,16 @@ export interface Client {
   address: string;
   notes: string; // The Post-it content
   tasks: ClientTask[];
+  createdAt: number;
+}
+
+export interface ServiceRecord {
+  id: string;
+  name: string; // e.g. "Impressão PB", "Formatação"
+  description: string;
+  quantity: number;
+  value: number; // Unit value or total value
+  date: string; // YYYY-MM-DD
   createdAt: number;
 }
 

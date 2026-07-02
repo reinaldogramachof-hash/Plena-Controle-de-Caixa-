@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Transaction, Category, TransactionType, PaymentMethod } from '../types';
-import { generateId } from '../utils';
+import { generateId, getTodayLocal } from '../utils';
 import { Button } from './ui/Button';
 
 interface Props {
@@ -12,20 +12,12 @@ interface Props {
 }
 
 export const TransactionForm: React.FC<Props> = ({ categories, onSave, onClose, initialData }) => {
-  // Use local date for initial value instead of UTC (toISOString)
-  const getTodayLocal = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   const [type, setType] = useState<TransactionType>(initialData?.type || 'expense');
   const [amount, setAmount] = useState(initialData ? initialData.amount.toString() : '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [categoryId, setCategoryId] = useState(initialData?.categoryId || '');
   const [date, setDate] = useState(initialData?.date || getTodayLocal());
+  const [quantity, setQuantity] = useState(initialData?.quantity?.toString() || '1');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(initialData?.paymentMethod || 'cash');
   const [tags, setTags] = useState(initialData?.tags.join(', ') || '');
 
@@ -37,6 +29,7 @@ export const TransactionForm: React.FC<Props> = ({ categories, onSave, onClose, 
       id: initialData?.id || generateId(), // Keep ID if editing, generate new if creating
       type,
       amount: parseFloat(amount),
+      quantity: quantity ? parseInt(quantity, 10) : 1,
       description,
       categoryId,
       date,
@@ -94,6 +87,21 @@ export const TransactionForm: React.FC<Props> = ({ categories, onSave, onClose, 
               </div>
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Quantidade</label>
+              <input 
+                type="number"
+                min="1"
+                required
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-plena-orange focus:border-transparent outline-none text-black"
+                value={quantity}
+                onChange={e => setQuantity(e.target.value)}
+                placeholder="Ex: 1"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
               <input 
                 type="date"
@@ -103,18 +111,17 @@ export const TransactionForm: React.FC<Props> = ({ categories, onSave, onClose, 
                 onChange={e => setDate(e.target.value)}
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-            <input 
-              type="text"
-              required
-              className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-plena-orange focus:border-transparent outline-none text-black"
-              placeholder="Ex: Pagamento Cliente X"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+              <input 
+                type="text"
+                required
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-plena-orange focus:border-transparent outline-none text-black"
+                placeholder="Ex: Pagamento Cliente X"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

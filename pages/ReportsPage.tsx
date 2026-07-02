@@ -4,7 +4,7 @@ import {
 } from 'recharts';
 import { 
   Calendar, Upload, Share2, TrendingUp, TrendingDown, 
-  DollarSign, AlertCircle, CalendarDays, Trophy
+  DollarSign, AlertCircle, CalendarDays, Trophy, Hash
 } from 'lucide-react';
 import { Transaction, Category } from '../types';
 import { formatCurrency } from '../utils';
@@ -80,6 +80,30 @@ export const ReportsPage: React.FC<Props> = ({ transactions, categories, onTrans
       percentage: stats.income > 0 ? (maxAmount / stats.income) * 100 : 0
     };
   }, [reportData, categories, stats.income]);
+
+  // Service Quantities Calculation
+  const serviceQuantities = useMemo(() => {
+    const qtyMap: Record<string, number> = {};
+    const revMap: Record<string, number> = {};
+    
+    reportData.filter(t => t.type === 'income').forEach(t => {
+      qtyMap[t.categoryId] = (qtyMap[t.categoryId] || 0) + (t.quantity || 1);
+      revMap[t.categoryId] = (revMap[t.categoryId] || 0) + t.amount;
+    });
+
+    const result = Object.entries(qtyMap).map(([id, qty]) => {
+      const category = categories.find(c => c.id === id);
+      return {
+        id,
+        name: category?.name || 'Desconhecido',
+        color: category?.color || '#ccc',
+        quantity: qty,
+        revenue: revMap[id]
+      };
+    });
+    
+    return result.sort((a, b) => b.quantity - a.quantity);
+  }, [reportData, categories]);
 
   // Chart Data (Day by Day for the selected range)
   const chartData = useMemo(() => {
@@ -336,6 +360,37 @@ export const ReportsPage: React.FC<Props> = ({ transactions, categories, onTrans
                 {topService.percentage.toFixed(1)}% da receita
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Services Quantities List */}
+      {serviceQuantities.length > 0 && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 mb-6">
+            <Hash className="w-5 h-5 text-gray-400" />
+            <h3 className="text-lg font-bold text-gray-900">Quantidade por Serviço Realizado</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {serviceQuantities.map(svc => (
+              <div key={svc.id} className="flex flex-col p-4 border border-gray-100 rounded-lg hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: svc.color }}></div>
+                  <span className="font-semibold text-gray-800 line-clamp-1">{svc.name}</span>
+                </div>
+                <div className="flex justify-between items-end mt-2">
+                  <div>
+                    <span className="text-sm text-gray-500">Qtd:</span>
+                    <span className="ml-1 text-xl font-bold text-gray-900">{svc.quantity}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs text-gray-500 block">Receita</span>
+                    <span className="text-sm font-medium text-green-600">{formatCurrency(svc.revenue)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

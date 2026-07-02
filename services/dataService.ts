@@ -1,8 +1,9 @@
-import { Category, Transaction, Client } from '../types';
+import { Category, Transaction, Client, ServiceRecord } from '../types';
 
 const TRANS_KEY = 'plena_transactions';
 const CAT_KEY = 'plena_categories';
 const CLIENTS_KEY = 'plena_clients';
+const SERVICES_KEY = 'plena_services';
 
 const defaultCategories: Category[] = [
   // Entradas (Receitas)
@@ -47,11 +48,21 @@ export const saveClients = (clients: Client[]) => {
   localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients));
 };
 
+export const getServiceRecords = (): ServiceRecord[] => {
+  const data = localStorage.getItem(SERVICES_KEY);
+  return data ? JSON.parse(data) : [];
+};
+
+export const saveServiceRecords = (records: ServiceRecord[]) => {
+  localStorage.setItem(SERVICES_KEY, JSON.stringify(records));
+};
+
 export const exportData = () => {
   const data = {
     transactions: getTransactions(),
     categories: getCategories(),
     clients: getClients(),
+    services: getServiceRecords(),
     exportDate: new Date().toISOString(),
   };
   return JSON.stringify(data, null, 2);
