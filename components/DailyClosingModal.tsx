@@ -59,13 +59,13 @@ export const DailyClosingModal: React.FC<Props> = ({ transactions, services, ser
 
   const todayServices = useMemo(() => {
     const qtyMap: Record<string, number> = {};
-    services.filter(s => s.date === todayStr).forEach(s => {
+    (services || []).filter(s => s.date === todayStr).forEach(s => {
       qtyMap[s.serviceItemId] = (qtyMap[s.serviceItemId] || 0) + s.quantity;
     });
 
     return Object.entries(qtyMap)
       .map(([id, qty]) => {
-        const item = serviceItems.find(c => c.id === id);
+        const item = (serviceItems || []).find(c => c.id === id);
         return { name: item?.name || 'Serviço Excluído', quantity: qty };
       })
       .filter(r => r.quantity > 0)

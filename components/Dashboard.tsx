@@ -39,19 +39,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, 
 
   const servicesToday = useMemo(() => {
     const today = getTodayLocal();
-    return services.filter(s => s.date === today).reduce((sum, curr) => sum + curr.quantity, 0);
+    return (services || []).filter(s => s.date === today).reduce((sum, curr) => sum + curr.quantity, 0);
   }, [services]);
 
   const servicesTodayList = useMemo(() => {
     const today = getTodayLocal();
     const qtyMap: Record<string, number> = {};
-    services.filter(s => s.date === today).forEach(s => {
+    (services || []).filter(s => s.date === today).forEach(s => {
       qtyMap[s.serviceItemId] = (qtyMap[s.serviceItemId] || 0) + s.quantity;
     });
 
     return Object.entries(qtyMap)
       .map(([id, qty]) => {
-        const item = serviceItems.find(c => c.id === id);
+        const item = (serviceItems || []).find(c => c.id === id);
         return { name: item?.name || 'Serviço Excluído', quantity: qty };
       })
       .filter(r => r.quantity > 0)

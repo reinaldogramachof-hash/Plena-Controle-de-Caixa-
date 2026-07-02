@@ -32,7 +32,8 @@ const defaultCategories: Category[] = [
 
 export const getTransactions = (): Transaction[] => {
   const data = localStorage.getItem(TRANS_KEY);
-  return data ? JSON.parse(data) : [];
+  const parsed = data ? JSON.parse(data) : null;
+  return Array.isArray(parsed) ? parsed : [];
 };
 
 export const saveTransactions = (transactions: Transaction[]) => {
@@ -41,7 +42,8 @@ export const saveTransactions = (transactions: Transaction[]) => {
 
 export const getCategories = (): Category[] => {
   const data = localStorage.getItem(CAT_KEY);
-  return data ? JSON.parse(data) : defaultCategories;
+  const parsed = data ? JSON.parse(data) : null;
+  return Array.isArray(parsed) ? parsed : defaultCategories;
 };
 
 export const saveCategories = (categories: Category[]) => {
@@ -50,7 +52,8 @@ export const saveCategories = (categories: Category[]) => {
 
 export const getClients = (): Client[] => {
   const data = localStorage.getItem(CLIENTS_KEY);
-  return data ? JSON.parse(data) : [];
+  const parsed = data ? JSON.parse(data) : null;
+  return Array.isArray(parsed) ? parsed : [];
 };
 
 export const saveClients = (clients: Client[]) => {
@@ -59,7 +62,8 @@ export const saveClients = (clients: Client[]) => {
 
 export const getServiceItems = (): ServiceItem[] => {
   const data = localStorage.getItem(SERVICE_ITEMS_KEY);
-  return data ? JSON.parse(data) : defaultServiceItems;
+  const parsed = data ? JSON.parse(data) : null;
+  return Array.isArray(parsed) ? parsed : defaultServiceItems;
 };
 
 export const saveServiceItems = (items: ServiceItem[]) => {
@@ -68,7 +72,8 @@ export const saveServiceItems = (items: ServiceItem[]) => {
 
 export const getServiceRecords = (): ServiceRecord[] => {
   const data = localStorage.getItem(SERVICES_KEY);
-  return data ? JSON.parse(data) : [];
+  const parsed = data ? JSON.parse(data) : null;
+  return Array.isArray(parsed) ? parsed : [];
 };
 
 export const saveServiceRecords = (records: ServiceRecord[]) => {

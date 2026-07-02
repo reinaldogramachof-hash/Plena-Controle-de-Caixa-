@@ -76,6 +76,29 @@
         });
       }
     </script>
+    <style>
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        .fixed.inset-0, .fixed.inset-0 * {
+          visibility: visible;
+        }
+        .fixed.inset-0 {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          background: white !important;
+        }
+        .bg-white.rounded-xl.shadow-xl {
+          box-shadow: none !important;
+        }
+        button, .print\:hidden {
+          display: none !important;
+        }
+      }
+    </style>
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>

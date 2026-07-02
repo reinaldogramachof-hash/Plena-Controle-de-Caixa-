@@ -4,7 +4,7 @@ import {
 } from 'recharts';
 import { 
   Calendar, Upload, Share2, TrendingUp, TrendingDown, 
-  DollarSign, AlertCircle, CalendarDays, Trophy, Hash
+  DollarSign, AlertCircle, CalendarDays, Trophy, Hash, FileText, Printer, X
 } from 'lucide-react';
 import { Transaction, Category, ServiceRecord, ServiceItem } from '../types';
 import { formatCurrency } from '../utils';
@@ -44,6 +44,7 @@ export const ReportsPage: React.FC<Props> = ({
 
   const [startDate, setStartDate] = useState(getStartOfMonth());
   const [endDate, setEndDate] = useState(getToday());
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -93,14 +94,14 @@ export const ReportsPage: React.FC<Props> = ({
   const serviceQuantities = useMemo(() => {
     const qtyMap: Record<string, number> = {};
     
-    services.filter(s => {
+    (services || []).filter(s => {
       return s.date >= startDate && s.date <= endDate;
     }).forEach(s => {
       qtyMap[s.serviceItemId] = (qtyMap[s.serviceItemId] || 0) + s.quantity;
     });
 
     const result = Object.entries(qtyMap).map(([id, qty]) => {
-      const item = serviceItems.find(c => c.id === id);
+      const item = (serviceItems || []).find(c => c.id === id);
       return {
         id,
         name: item?.name || 'Serviço Excluído',
@@ -197,6 +198,13 @@ export const ReportsPage: React.FC<Props> = ({
         }
     }
 
+    if (serviceQuantities.length > 0) {
+      message += `\n*💼 Serviços Realizados:*\n`;
+      serviceQuantities.forEach(s => {
+        message += `- ${s.name}: ${s.quantity}\n`;
+      });
+    }
+
     message += `\n_Gerado pelo Sistema Web Plena_`;
 
     const phoneNumber = '5512981488505';
@@ -257,6 +265,9 @@ export const ReportsPage: React.FC<Props> = ({
             
             <Button onClick={handleWhatsAppShare} className="bg-green-600 hover:bg-green-700 text-white border-transparent" title="Enviar Relatório no WhatsApp">
               <Share2 className="w-4 h-4" />
+            </Button>
+            <Button onClick={() => setIsReportModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white border-transparent" title="Gerar Relatório Detalhado">
+              <FileText className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -393,6 +404,133 @@ export const ReportsPage: React.FC<Props> = ({
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {isReportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Relatório Detalhado</h2>
+                <p className="text-sm text-gray-500">Período: {new Date(startDate + 'T12:00:00').toLocaleDateString('pt-BR')} a {new Date(endDate + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button 
+                  onClick={() => window.print()} 
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Imprimir
+                </Button>
+                <button 
+                  onClick={() => setIsReportModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-8 print:p-0 print:space-y-6">
+              {/* Resumo Financeiro */}
+              <section>
+                <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Resumo Financeiro</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                    <p className="text-sm text-green-700 mb-1">Total Entradas</p>
+                    <p className="text-xl font-bold text-green-800">{formatCurrency(stats.income)}</p>
+                  </div>
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                    <p className="text-sm text-red-700 mb-1">Total Saídas</p>
+                    <p className="text-xl font-bold text-red-800">{formatCurrency(stats.expense)}</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <p className="text-sm text-gray-700 mb-1">Saldo</p>
+                    <p className={`text-xl font-bold ${stats.balance >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
+                      {formatCurrency(stats.balance)}
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Serviços Realizados */}
+              {serviceQuantities.length > 0 && (
+                <section>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Serviços Realizados por Tipo</h3>
+                  <div className="bg-white border rounded-lg overflow-hidden">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold text-gray-700">Serviço</th>
+                          <th className="px-4 py-3 font-semibold text-gray-700 text-right">Quantidade</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {serviceQuantities.map(svc => (
+                          <tr key={svc.id}>
+                            <td className="px-4 py-3 text-gray-900">{svc.name}</td>
+                            <td className="px-4 py-3 text-right font-mono font-medium text-blue-600">{svc.quantity}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+
+              {/* Detalhamento de Transações */}
+              <section>
+                <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Detalhamento de Transações (Entradas/Saídas)</h3>
+                <div className="bg-white border rounded-lg overflow-hidden">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold text-gray-700">Data</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700">Categoria</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700">Descrição</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700">Método</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700 text-right">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {reportData.sort((a, b) => b.date.localeCompare(a.date)).map(t => {
+                        const isIncome = t.type === 'income';
+                        const cat = categories.find(c => c.id === t.categoryId);
+                        return (
+                          <tr key={t.id}>
+                            <td className="px-4 py-3 text-gray-600">{new Date(t.date + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
+                            <td className="px-4 py-3 text-gray-900">{cat?.name || '---'}</td>
+                            <td className="px-4 py-3 text-gray-600">{t.description || '-'}</td>
+                            <td className="px-4 py-3 text-gray-500 capitalize">
+                              {t.paymentMethod === 'cash' ? 'Dinheiro' : 
+                               t.paymentMethod === 'card' ? 'Cartão' : 
+                               t.paymentMethod === 'pix' ? 'Pix' :
+                               t.paymentMethod === 'transfer' ? 'Transf.' : 'Outro'}
+                            </td>
+                            <td className={`px-4 py-3 text-right font-medium ${isIncome ? 'text-green-600' : 'text-red-600'}`}>
+                              {isIncome ? '+' : '-'}{formatCurrency(t.amount)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {reportData.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                            Nenhuma transação no período.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <div className="text-center text-xs text-gray-400 pt-4 print:pt-2">
+                Relatório gerado em {new Date().toLocaleString('pt-BR')} pelo Sistema Plena
+              </div>
+            </div>
           </div>
         </div>
       )}
