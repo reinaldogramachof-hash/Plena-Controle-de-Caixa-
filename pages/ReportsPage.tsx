@@ -6,7 +6,7 @@ import {
   Calendar, Upload, Share2, TrendingUp, TrendingDown, 
   DollarSign, AlertCircle, CalendarDays, Trophy, Hash
 } from 'lucide-react';
-import { Transaction, Category } from '../types';
+import { Transaction, Category, ServiceRecord, ServiceItem } from '../types';
 import { formatCurrency } from '../utils';
 import { Button } from '../components/ui/Button';
 import { mergeData } from '../services/dataService';
@@ -14,10 +14,18 @@ import { mergeData } from '../services/dataService';
 interface Props {
   transactions: Transaction[];
   categories: Category[];
+  services: ServiceRecord[];
+  serviceItems: ServiceItem[];
   onTransactionsUpdate: () => void;
 }
 
-export const ReportsPage: React.FC<Props> = ({ transactions, categories, onTransactionsUpdate }) => {
+export const ReportsPage: React.FC<Props> = ({ 
+  transactions, 
+  categories, 
+  services,
+  serviceItems,
+  onTransactionsUpdate 
+}) => {
   // Helper to format date as YYYY-MM-DD using local time
   const toLocalDateString = (date: Date) => {
     const year = date.getFullYear();
@@ -84,26 +92,24 @@ export const ReportsPage: React.FC<Props> = ({ transactions, categories, onTrans
   // Service Quantities Calculation
   const serviceQuantities = useMemo(() => {
     const qtyMap: Record<string, number> = {};
-    const revMap: Record<string, number> = {};
     
-    reportData.filter(t => t.type === 'income').forEach(t => {
-      qtyMap[t.categoryId] = (qtyMap[t.categoryId] || 0) + (t.quantity || 1);
-      revMap[t.categoryId] = (revMap[t.categoryId] || 0) + t.amount;
+    services.filter(s => {
+      return s.date >= dateRange.start && s.date <= dateRange.end;
+    }).forEach(s => {
+      qtyMap[s.serviceItemId] = (qtyMap[s.serviceItemId] || 0) + s.quantity;
     });
 
     const result = Object.entries(qtyMap).map(([id, qty]) => {
-      const category = categories.find(c => c.id === id);
+      const item = serviceItems.find(c => c.id === id);
       return {
         id,
-        name: category?.name || 'Desconhecido',
-        color: category?.color || '#ccc',
-        quantity: qty,
-        revenue: revMap[id]
+        name: item?.name || 'Serviço Excluído',
+        quantity: qty
       };
     });
     
-    return result.sort((a, b) => b.quantity - a.quantity);
-  }, [reportData, categories]);
+    return result.sort((a, b) => b.quantity - a.quantity).filter(r => r.quantity > 0);
+  }, [services, serviceItems, dateRange]);
 
   // Chart Data (Day by Day for the selected range)
   const chartData = useMemo(() => {
@@ -376,17 +382,13 @@ export const ReportsPage: React.FC<Props> = ({ transactions, categories, onTrans
             {serviceQuantities.map(svc => (
               <div key={svc.id} className="flex flex-col p-4 border border-gray-100 rounded-lg hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: svc.color }}></div>
+                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
                   <span className="font-semibold text-gray-800 line-clamp-1">{svc.name}</span>
                 </div>
                 <div className="flex justify-between items-end mt-2">
                   <div>
-                    <span className="text-sm text-gray-500">Qtd:</span>
+                    <span className="text-sm text-gray-500">Quantidade:</span>
                     <span className="ml-1 text-xl font-bold text-gray-900">{svc.quantity}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs text-gray-500 block">Receita</span>
-                    <span className="text-sm font-medium text-green-600">{formatCurrency(svc.revenue)}</span>
                   </div>
                 </div>
               </div>

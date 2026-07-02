@@ -16,9 +16,10 @@ import {
   getTransactions, saveTransactions, 
   getCategories, saveCategories,
   getClients, saveClients,
-  getServiceRecords, saveServiceRecords
+  getServiceRecords, saveServiceRecords,
+  getServiceItems, saveServiceItems
 } from './services/dataService';
-import { Transaction, Category, Client, ServiceRecord } from './types';
+import { Transaction, Category, Client, ServiceRecord, ServiceItem } from './types';
 
 /**
  * Plena Cash Control
@@ -32,6 +33,7 @@ function App() {
   const [categories, setCategories] = useState<Category[]>(() => getCategories());
   const [clients, setClients] = useState<Client[]>(() => getClients());
   const [services, setServices] = useState<ServiceRecord[]>(() => getServiceRecords());
+  const [serviceItems, setServiceItems] = useState<ServiceItem[]>(() => getServiceItems());
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosingModalOpen, setIsClosingModalOpen] = useState(false);
@@ -42,6 +44,7 @@ function App() {
     setCategories(getCategories());
     setClients(getClients());
     setServices(getServiceRecords());
+    setServiceItems(getServiceItems());
   };
 
   // Persist transactions
@@ -58,6 +61,11 @@ function App() {
   useEffect(() => {
     saveServiceRecords(services);
   }, [services]);
+
+  // Persist service items
+  useEffect(() => {
+    saveServiceItems(serviceItems);
+  }, [serviceItems]);
 
   // --- Transaction Handlers ---
   const handleAddTransaction = (transaction: Transaction) => {
@@ -132,6 +140,23 @@ function App() {
     setServices(updated);
   };
 
+  const handleAddServiceItem = (item: ServiceItem) => {
+    const updated = [...serviceItems, item];
+    setServiceItems(updated);
+  };
+
+  const handleUpdateServiceItem = (updatedItem: ServiceItem) => {
+    const updated = serviceItems.map(i => 
+      i.id === updatedItem.id ? updatedItem : i
+    );
+    setServiceItems(updated);
+  };
+
+  const handleDeleteServiceItem = (id: string) => {
+    const updated = serviceItems.filter(i => i.id !== id);
+    setServiceItems(updated);
+  };
+
   return (
     <Router>
       <Layout>
@@ -154,7 +179,7 @@ function App() {
         </div>
 
         <Routes>
-          <Route path="/" element={<Dashboard transactions={transactions} categories={categories} />} />
+          <Route path="/" element={<Dashboard transactions={transactions} categories={categories} services={services} serviceItems={serviceItems} />} />
           <Route 
             path="/transactions" 
             element={
@@ -181,10 +206,14 @@ function App() {
             path="/services" 
             element={
               <ServicesPage 
-                services={services} 
+                services={services}
+                serviceItems={serviceItems}
                 onAddService={handleAddService}
                 onUpdateService={handleUpdateService}
                 onDeleteService={handleDeleteService}
+                onAddServiceItem={handleAddServiceItem}
+                onUpdateServiceItem={handleUpdateServiceItem}
+                onDeleteServiceItem={handleDeleteServiceItem}
               />
             } 
           />
@@ -194,6 +223,8 @@ function App() {
               <ReportsPage 
                 transactions={transactions} 
                 categories={categories}
+                services={services}
+                serviceItems={serviceItems}
                 onTransactionsUpdate={refreshData}
               />
             } 
@@ -224,6 +255,8 @@ function App() {
         {isClosingModalOpen && (
           <DailyClosingModal 
             transactions={transactions}
+            services={services}
+            serviceItems={serviceItems}
             onClose={() => setIsClosingModalOpen(false)}
           />
         )}

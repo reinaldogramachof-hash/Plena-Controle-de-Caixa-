@@ -11,16 +11,20 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, Calendar, Wallet } from 'lucide-react';
-import { Transaction, Category } from '../types';
+import { TrendingUp, TrendingDown, DollarSign, Calendar, Wallet, Briefcase } from 'lucide-react';
+import { Transaction, Category, ServiceRecord, ServiceItem } from '../types';
 import { formatCurrency } from '../utils';
+
+import { getTodayLocal } from '../utils';
 
 interface DashboardProps {
   transactions: Transaction[];
   categories: Category[];
+  services: ServiceRecord[];
+  serviceItems: ServiceItem[];
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories, services, serviceItems }) => {
   
   const stats = useMemo(() => {
     return transactions.reduce((acc, curr) => {
@@ -32,6 +36,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories }
       return acc;
     }, { income: 0, expense: 0 });
   }, [transactions]);
+
+  const servicesToday = useMemo(() => {
+    const today = getTodayLocal();
+    return services.filter(s => s.date === today).reduce((sum, curr) => sum + curr.quantity, 0);
+  }, [services]);
+
+  const servicesTodayList = useMemo(() => {
+    const today = getTodayLocal();
+    const qtyMap: Record<string, number> = {};
+    services.filter(s => s.date === today).forEach(s => {
+      qtyMap[s.serviceItemId] = (qtyMap[s.serviceItemId] || 0) + s.quantity;
+    });
+
+    return Object.entries(qtyMap)
+      .map(([id, qty]) => {
+        const item = serviceItems.find(c => c.id === id);
+        return { name: item?.name || 'Serviço Excluído', quantity: qty };
+      })
+      .filter(r => r.quantity > 0)
+      .sort((a, b) => b.quantity - a.quantity);
+  }, [services, serviceItems]);
 
   const balance = stats.income - stats.expense;
 
@@ -73,7 +98,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories }
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Hero Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         
         {/* Hero Balance Card */}
         <div className="bg-gradient-to-br from-plena-orange to-red-600 rounded-2xl shadow-lg shadow-orange-200 text-white p-6 relative overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
@@ -90,10 +115,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories }
             
             <div>
               <p className="text-orange-100 text-sm font-medium mb-1">Saldo em Caixa</p>
-              <h2 className="text-3xl lg:text-4xl font-mono font-bold tracking-tight">
+              <h2 className="text-3xl lg:text-3xl font-mono font-bold tracking-tight">
                 {formatCurrency(balance)}
               </h2>
             </div>
+          </div>
+        </div>
+
+        {/* Services Card */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 flex flex-col justify-between group">
+          <div className="flex items-center justify-between mb-4">
+             <div>
+               <p className="text-gray-500 text-sm font-medium">Serviços Hoje</p>
+               <h3 className="text-2xl font-bold text-gray-900 mt-1 group-hover:text-blue-600 transition-colors">
+                 {servicesToday}
+               </h3>
+             </div>
+             <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+                <Briefcase className="w-6 h-6 text-blue-600" />
+             </div>
+          </div>
+          <div className="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
+             <div className="bg-blue-500 h-full rounded-full" style={{ width: '100%' }}></div>
           </div>
         </div>
 
@@ -224,6 +267,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, categories }
           </div>
         </div>
       </div>
+
+      {/* Services List Section */}
+      {servicesTodayList.length > 0 && (
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 animate-fade-in">
+          <div className="flex items-center gap-2 mb-6">
+            <Briefcase className="w-5 h-5 text-blue-600" />
+            <h3 className="text-lg font-bold text-gray-900">Serviços Realizados Hoje</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {servicesTodayList.map(svc => (
+              <div key={svc.name} className="flex justify-between items-center p-4 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-white hover:shadow-md transition-all">
+                <span className="font-semibold text-gray-800">{svc.name}</span>
+                <span className="font-mono text-xl font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">
+                  {svc.quantity}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

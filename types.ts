@@ -41,14 +41,18 @@ export interface Client {
   createdAt: number;
 }
 
+export interface ServiceItem {
+  id: string;
+  name: string;
+  defaultPrice: number;
+}
+
 export interface ServiceRecord {
   id: string;
-  name: string; // e.g. "Impressão PB", "Formatação"
-  description: string;
+  serviceItemId: string; // reference to ServiceItem
+  name: string; // duplicated for historical if item deleted
   quantity: number;
-  value: number; // Unit value or total value
   date: string; // YYYY-MM-DD
-  createdAt: number;
 }
 
 export interface FilterState {

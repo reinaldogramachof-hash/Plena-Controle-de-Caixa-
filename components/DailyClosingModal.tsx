@@ -1,11 +1,13 @@
 import React, { useMemo } from 'react';
-import { X, MessageCircle, Calculator } from 'lucide-react';
-import { Transaction } from '../types';
+import { X, MessageCircle, Calculator, Briefcase } from 'lucide-react';
+import { Transaction, ServiceRecord, ServiceItem } from '../types';
 import { formatCurrency } from '../utils';
 import { Button } from './ui/Button';
 
 interface Props {
   transactions: Transaction[];
+  services: ServiceRecord[];
+  serviceItems: ServiceItem[];
   onClose: () => void;
 }
 
@@ -18,7 +20,7 @@ interface DailyStats {
   transactions: Transaction[];
 }
 
-export const DailyClosingModal: React.FC<Props> = ({ transactions, onClose }) => {
+export const DailyClosingModal: React.FC<Props> = ({ transactions, services, serviceItems, onClose }) => {
   const todayStr = useMemo(() => {
     const today = new Date();
     const year = today.getFullYear();
@@ -55,6 +57,21 @@ export const DailyClosingModal: React.FC<Props> = ({ transactions, onClose }) =>
     };
   }, [transactions, todayStr]);
 
+  const todayServices = useMemo(() => {
+    const qtyMap: Record<string, number> = {};
+    services.filter(s => s.date === todayStr).forEach(s => {
+      qtyMap[s.serviceItemId] = (qtyMap[s.serviceItemId] || 0) + s.quantity;
+    });
+
+    return Object.entries(qtyMap)
+      .map(([id, qty]) => {
+        const item = serviceItems.find(c => c.id === id);
+        return { name: item?.name || 'Serviço Excluído', quantity: qty };
+      })
+      .filter(r => r.quantity > 0)
+      .sort((a, b) => b.quantity - a.quantity);
+  }, [services, serviceItems, todayStr]);
+
   const handleWhatsApp = () => {
     const dateStr = new Date().toLocaleDateString('pt-BR');
     
@@ -77,6 +94,13 @@ export const DailyClosingModal: React.FC<Props> = ({ transactions, onClose }) =>
       
       message += `- ${label}: ${formatCurrency(amount as number)}\n`;
     });
+    
+    if (todayServices.length > 0) {
+      message += `\n*💼 Serviços Realizados:*\n`;
+      todayServices.forEach(s => {
+        message += `- ${s.name}: ${s.quantity}\n`;
+      });
+    }
     
     message += `\n_Gerado em: ${new Date().toLocaleTimeString()}_`;
 
@@ -146,6 +170,23 @@ export const DailyClosingModal: React.FC<Props> = ({ transactions, onClose }) =>
               ))}
             </div>
           </div>
+
+          {todayServices.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-sm font-bold text-gray-900 uppercase border-b border-gray-200 pb-2 mb-3 flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-blue-600" />
+                Serviços Realizados
+              </h3>
+              <div className="space-y-2">
+                {todayServices.map(s => (
+                  <div key={s.name} className="flex justify-between items-center text-sm">
+                    <span className="text-gray-700">{s.name}</span>
+                    <span className="font-mono font-medium text-blue-700">{s.quantity}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="border-t border-dashed border-gray-300 pt-4">
              <p className="text-xs text-center text-gray-400">

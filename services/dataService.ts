@@ -4,6 +4,15 @@ const TRANS_KEY = 'plena_transactions';
 const CAT_KEY = 'plena_categories';
 const CLIENTS_KEY = 'plena_clients';
 const SERVICES_KEY = 'plena_services';
+const SERVICE_ITEMS_KEY = 'plena_service_items';
+
+const defaultServiceItems: ServiceItem[] = [
+  { id: '1', name: 'Impressão PB', defaultPrice: 1.00 },
+  { id: '2', name: 'Impressão Colorida', defaultPrice: 2.50 },
+  { id: '3', name: 'Xerox', defaultPrice: 0.50 },
+  { id: '4', name: 'Encadernação', defaultPrice: 5.00 },
+  { id: '5', name: 'Plastificação', defaultPrice: 3.00 },
+];
 
 const defaultCategories: Category[] = [
   // Entradas (Receitas)
@@ -46,6 +55,15 @@ export const getClients = (): Client[] => {
 
 export const saveClients = (clients: Client[]) => {
   localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients));
+};
+
+export const getServiceItems = (): ServiceItem[] => {
+  const data = localStorage.getItem(SERVICE_ITEMS_KEY);
+  return data ? JSON.parse(data) : defaultServiceItems;
+};
+
+export const saveServiceItems = (items: ServiceItem[]) => {
+  localStorage.setItem(SERVICE_ITEMS_KEY, JSON.stringify(items));
 };
 
 export const getServiceRecords = (): ServiceRecord[] => {
