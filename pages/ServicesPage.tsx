@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Search, Trash2, Edit2, Briefcase, Minus, Settings2, X } from 'lucide-react';
+import { Plus, Search, Trash2, Edit2, Briefcase, Minus, Settings2, X, FileText, Printer, CalendarDays } from 'lucide-react';
 import { ServiceRecord, ServiceItem } from '../types';
 import { getTodayLocal } from '../utils';
 
@@ -32,6 +32,11 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({
   const [editingItem, setEditingItem] = useState<ServiceItem | null>(null);
   const [itemName, setItemName] = useState('');
   const [itemPrice, setItemPrice] = useState('');
+
+  // Report Modal State
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportStartDate, setReportStartDate] = useState(getTodayLocal());
+  const [reportEndDate, setReportEndDate] = useState(getTodayLocal());
 
   // Daily Services Logic
   const handleIncrement = (item: ServiceItem) => {
@@ -120,6 +125,13 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({
           >
             <Settings2 className="w-5 h-5" />
             Catálogo
+          </button>
+          <button 
+            onClick={() => setIsReportModalOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <FileText className="w-5 h-5" />
+            Relatório
           </button>
         </div>
       </div>
@@ -282,6 +294,116 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({
           </div>
         </div>
       )}
+
+      {isReportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 print:bg-white print:p-0">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] print:shadow-none print:max-h-none print:w-full">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100 print:hidden">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Relatório de Serviços</h2>
+                <p className="text-sm text-gray-500">Gere um relatório detalhado de serviços por período</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setIsReportModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-8 print:p-0 print:space-y-6 flex-1">
+              {/* Controls */}
+              <div className="flex flex-col md:flex-row gap-4 items-end mb-6 print:hidden">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Data Inicial</label>
+                  <input 
+                    type="date"
+                    value={reportStartDate}
+                    onChange={(e) => setReportStartDate(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-plena-orange outline-none bg-white text-gray-700 w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Data Final</label>
+                  <input 
+                    type="date"
+                    value={reportEndDate}
+                    onChange={(e) => setReportEndDate(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-plena-orange outline-none bg-white text-gray-700 w-full"
+                  />
+                </div>
+                <button 
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                >
+                  <Printer className="w-4 h-4" />
+                  Imprimir Relatório
+                </button>
+              </div>
+
+              {/* Report Header (Print only) */}
+              <div className="hidden print:block text-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Relatório de Serviços</h2>
+                <p className="text-gray-600">
+                  Período: {new Date(reportStartDate + 'T12:00:00').toLocaleDateString('pt-BR')} a {new Date(reportEndDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+
+              {/* Report Content */}
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Serviços Realizados</h3>
+                <div className="bg-white border rounded-lg overflow-hidden">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold text-gray-700">Serviço</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700 text-right">Quantidade</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {(() => {
+                        const qtyMap: Record<string, number> = {};
+                        (services || []).filter(s => s.date >= reportStartDate && s.date <= reportEndDate).forEach(s => {
+                          qtyMap[s.serviceItemId] = (qtyMap[s.serviceItemId] || 0) + s.quantity;
+                        });
+
+                        const result = Object.entries(qtyMap).map(([id, qty]) => {
+                          const item = (serviceItems || []).find(c => c.id === id);
+                          return {
+                            id,
+                            name: item?.name || 'Serviço Excluído',
+                            quantity: qty
+                          };
+                        }).filter(r => r.quantity > 0).sort((a, b) => b.quantity - a.quantity);
+
+                        if (result.length === 0) {
+                          return (
+                            <tr>
+                              <td colSpan={2} className="px-4 py-8 text-center text-gray-500">
+                                Nenhum serviço registrado neste período.
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        return result.map(svc => (
+                          <tr key={svc.id}>
+                            <td className="px-4 py-3 text-gray-900">{svc.name}</td>
+                            <td className="px-4 py-3 text-right font-mono font-medium text-blue-600">{svc.quantity}</td>
+                          </tr>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
