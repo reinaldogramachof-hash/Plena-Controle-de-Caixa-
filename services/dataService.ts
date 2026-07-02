@@ -1,4 +1,4 @@
-import { Category, Transaction, Client, ServiceRecord } from '../types';
+import { Category, Transaction, Client, ServiceRecord, ServiceItem } from '../types';
 
 const TRANS_KEY = 'plena_transactions';
 const CAT_KEY = 'plena_categories';

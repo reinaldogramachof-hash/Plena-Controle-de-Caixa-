@@ -94,7 +94,7 @@ export const ReportsPage: React.FC<Props> = ({
     const qtyMap: Record<string, number> = {};
     
     services.filter(s => {
-      return s.date >= dateRange.start && s.date <= dateRange.end;
+      return s.date >= startDate && s.date <= endDate;
     }).forEach(s => {
       qtyMap[s.serviceItemId] = (qtyMap[s.serviceItemId] || 0) + s.quantity;
     });
@@ -109,7 +109,7 @@ export const ReportsPage: React.FC<Props> = ({
     });
     
     return result.sort((a, b) => b.quantity - a.quantity).filter(r => r.quantity > 0);
-  }, [services, serviceItems, dateRange]);
+  }, [services, serviceItems, startDate, endDate]);
 
   // Chart Data (Day by Day for the selected range)
   const chartData = useMemo(() => {
